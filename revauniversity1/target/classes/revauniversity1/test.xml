@@ -1,0 +1,97 @@
+<xml>
+<project>
+<properties>
+<testing>1</testing>
+<version>2</version>
+</properties>
+<target name="testing">
+</target>
+<target name="abc" depends="testing">
+</target>
+<target name="main" depends="abc">
+</target>
+<target name="prepareTarget" depends="cleanMain">
+<mkdir dir="${project.artifacts}"/>
+<mkdir dir="${project.target}"/>
+<mkdir dir="${project.build.output}"/>
+<mkdir dir="${project.ejb.classes}"/>
+<mkdir dir="${project.java.classes}"/>
+<mkdir dir="${project.build.lib}"/>
+<mkdir dir="${project.web.classes}"/>
+</target>
+<target name="compileEjb" depends="prepareTarget">
+<path id="app.ejb.classpath">
+<fileset dir="${project.source.lib}" includes="**/*.jar"/>
+<fileset dir="${websphere.lib}" includes="**/*.jar"/>
+</path>
+<javac encoding="${compiler.encoding}" destdir="${project.ejb.classes}" classpath="${build.app.classpath}"
+debug="on" deprecation="off" optimize="on" fork="false" verbose="false">
+<src path="${project.ejb.source}"/>
+<classpath refid="app.ejb.classpath"/>
+</javac>
+</target>
+<target name="createEJBJar" depends="compileEjb">
+<jar jarfile="${project.artifacts}/${name.ejb.jar}" manifest="${project.build.output}/WebContent/META-INF/manifest">
+<fileset dir="${project.ejb.classes}" excludes="**/*.jar"/>
+</jar>
+</target>
+<target name="compileJava" depends="createEJBJar">
+<path id="app.build.classpath">
+<fileset dir="${project1.source.lib}" includes="**/*.jar"/>
+<fileset dir="${websphere.lib}" includes="**/*.jar"/>
+<fileset dir="${project.artifacts}" includes="${name.ejb.jar}"/>
+</path>
+<javac encoding="${compiler.encoding}" destdir="${project.build.classes}" classpath="${build.app.classpath}"
+debug="on" deprecation="off" optimize="on" fork="false" verbose="false">
+<src path="${project.java.source}"/>
+<classpath refid="app.build.classpath"/>
+</javac>
+</target>
+<copy todir="${project1.build.output}/${build.env}">
+<fileset dir="${project1.working.sub.dir}/JavaSource/properties/logger/${build.env}">
+<include name="log4j.properties"/>
+</fileset>
+</copy>
+<!-- Populate the build version parameters -->
+<copy todir="${project.build.version}/${build.env}">
+<fileset dir="${project.working.sub.dir}/BuildScripts/">
+<include name="build.version"/>
+</fileset>
+</copy>
+<replace file="${project.build.version}/${deploy.env}/build.version" token="{build.branch}" value="${buildBranch}" />
+<replace file="${project.build.version}/${deploy.env}/build.version" token="{vcs.revision}" value="${vcs.revision}" />
+<replace file="${project.build.version}/${deploy.env}/build.version" token="{build.env}" value="${deploy.env}" />
+<replace file="${project.build.version}/${deploy.env}/build.version" token="{build.version}" value="${buildVersion}" />
+<replace file="${project.build.version}/${deploy.env}/build.version" token="{build.result.key}" value="${resultKey}" />
+<replace file="${project.build.version}/${deploy.env}/build.version" token="{buildtool.url}" value="${buildTooloURL}" />
+<replace file="${project.build.version}/${deploy.env}/build.version" token="{tool.build.time}" value="${buildTime}" />
+</target>
+<target name="createJar" depends="compileJava">
+<jar jarfile="${project.artifacts}/${name.java.jar}" manifest="${project.build.output}/WebContent/META-INF/manifest">
+<fileset dir="${project.build.classes}" excludes="**/*.jar"/>
+</jar>
+</target>
+<target name="createWar" depends="prepareOutput">
+<war destfile="${project.artifacts}/${name.war}" update="true"
+webxml="${projectName.build.output}/WebContent/WEB-INF/web.xml">
+<classes dir="${project.build.output}/WebContent/WEB-INF/classes" />
+<fileset dir="${project.build.output}">
+<exclude name="ejb-classes" />
+<exclude name="java-classes" />
+</fileset>
+</war>
+</target>
+<target name="createEar" depends="createWar">
+<ear
+destfile="${project.artifacts}/${name.ear}"
+manifest="${project.build.output}/WebContent/META-INF/manifest"
+update="true" appxml="${project.build.output}/application/application.xml">
+<fileset dir="${project.artifacts}">
+<include name="**/${name.war}"/>
+</fileset>
+<fileset dir="${project.build.version}/${deploy.env}">
+<include name="build.version"/>
+</fileset>
+</ear> </target>
+</project>
+</xml>
